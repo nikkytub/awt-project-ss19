@@ -38,22 +38,15 @@ for i in result:
                     data.append(k.firstChild.data)
                 except AttributeError:
                     pass
-                    #print("***************************object has no attribute 'data'*****************************")
             res = [''.join(data)]
             data1.append(res)
             labels.append(i[j])
         except IOError:
             pass
-            #print("######################No such file {}".format("BayzickBullyingData/packet-all/" + j + ".xml") +
-            #      "##############################")
         except xml.parsers.expat.ExpatError:
             pass
-            #print("Not well formed: {}".format(j + ".xml"))
 conversation = [item for x in data1 for item in x]
 chat_with_labels = dict(zip(conversation, labels))
-#for k, v in chat_with_labels.items():
-    #print(k, v)
-#print(len(chat_with_labels))
 
 # To convert labels from Yes, No to 1, 0
 for n, i in enumerate(labels):
@@ -61,8 +54,6 @@ for n, i in enumerate(labels):
         labels[n] = 0
     elif i == 'Y':
         labels[n] = 1
-#print(lbls[:5])
-#print(flat_list[:5])
 
 # To find an average length of all the conversations
 average_conv_len = np.mean([len(x.split(" ")) for x in conversation])
@@ -75,7 +66,6 @@ vocabulary_processor = tf.contrib.learn.preprocessing.VocabularyProcessor(avg_le
 
 # To transform each conversation to numbers
 num_conversation = np.array(list(vocabulary_processor.fit_transform(conversation)))
-
 labels_array = np.array(labels)
 
 # To shuffle data
@@ -95,7 +85,7 @@ test_labels = shuffled_labels[training_size:total_size]
 
 tf.reset_default_graph()
 
-a = tf.placeholder(tf.int32, [None, avg_length])
+a = tf.placeholder(tf.int32, [None, avg_length], name="myInput")
 b = tf.placeholder(tf.int32, [None])
 
 batch_size = 20
@@ -104,14 +94,10 @@ embedding = 50
 label_max = 2
 
 vocab_size = len(vocabulary_processor.vocabulary_)
-print(vocab_size)
 
 embedding_vocab = tf.Variable(tf.random_uniform([vocab_size, embedding], -1.0, 1.0))
 
 embed = tf.nn.embedding_lookup(embedding_vocab, a)
-print(embedding_vocab)
-print(embed)
-
 
 # To instantiate LSTM cells
 lstm = tf.contrib.rnn.BasicLSTMCell(embedding)
@@ -120,8 +106,6 @@ lstm = tf.contrib.rnn.BasicLSTMCell(embedding)
 lstm = tf.contrib.rnn.DropoutWrapper(cell=lstm, output_keep_prob=0.80)
 
 output, (final_state, state_info) = tf.nn.dynamic_rnn(lstm, embed, dtype=tf.float32)
-
-print(final_state)
 
 logits = tf.layers.dense(final_state, label_max, activation=None)
 
@@ -152,12 +136,14 @@ with tf.Session() as sess:
             x_train = train_conv[minimum:maximum]
             y_train = train_labels[minimum:maximum]
 
-            training = {a: x_train, b:y_train}
+            training = {a: x_train, b: y_train}
             sess.run(training_steps, feed_dict=training)
 
             training_loss, training_accuracy = sess.run([loss, accuracy], feed_dict=training)
 
         testing = {a: test_conv, b: test_labels}
-
         test_loss, test_accuracy = sess.run([loss, accuracy], feed_dict=testing)
-        print("Epoch--> {}, Test Loss--> {:.3}, Test Accuracy--> {:.3}". format(epoch + 1, test_loss, test_accuracy))
+        print("Epoch--> {}, Test Accuracy--> {:.3}". format(epoch + 1, test_accuracy))
+    prediction = tf.argmax(logits, 1, name="myOutput")
+    tf.saved_model.simple_save(sess, "model", inputs={"myInput": a},
+                               outputs={"myOutput": prediction})
