@@ -1,14 +1,63 @@
+from __future__ import absolute_import
+from __future__ import division
+from __future__ import print_function
 import numpy as np
 import tensorflow as tf
+import pandas as pd
+from xml.dom import minidom
+import xml
+import glob
 
-mes = ["wow you must have been in the homo bar. cuz they suppose that they are the best nationalty in the world   anyway mr gribble: is your car name Civic? " \
-      "So you are judging a whole country based on some drunk idiots in a bar. Now that is stupid.  Actually you are really stupid for being a racist." \
-      "It is stupid that your judge the whole country...   Hell I live in america and I moved to Texas from Mississippi and I got made fun of and asked to say stupid shit cause I sounded different so suck it up..." \
-      "agree.plus it's not like you never make jokes about people that are from another country or look different!so don't complain!" \
-      "you should hear how they talk here in Minesota. ya, sure ya btechya, don't ya know. its a lot like the sing sony sveds" \
-      "i hate when people ask me to say things over and over again, but my accent is diff so i guess its new to them."]
+print(np.__version__)
+print(tf.__version__)
 
-mes1 = ["You bastard. I will kill you"]
+path = 'BayzickBullyingData/Human Concensus/'
+
+
+# To extract the file names with labels
+def extract_files_labels(file):
+    df = pd.read_excel(file)
+    files = np.array(df['Bully Tracer Consensus'], dtype='string')
+    labels = np.array(df['Unnamed: 1'], dtype='string')
+    files_to_labels = dict(zip(files[2:], labels[2:]))
+    return files_to_labels
+
+
+# To extract the chats with labels
+result = [extract_files_labels(files) for files in glob.glob(path + "*")]
+data1 = list()
+labels = list()
+for i in result:
+    for j in i.keys():
+        try:
+            doc = minidom.parse("BayzickBullyingData/packet-all/" + j + ".xml")
+            name = doc.getElementsByTagName("body")
+            data = list()
+            for k in name:
+                try:
+                    data.append(k.firstChild.data)
+                except AttributeError:
+                    pass
+            res = [''.join(data)]
+            data1.append(res)
+            labels.append(i[j])
+        except IOError:
+            pass
+        except xml.parsers.expat.ExpatError:
+            pass
+conversation = [item for x in data1 for item in x]
+chat_with_labels = dict(zip(conversation, labels))
+
+# To convert labels from Yes, No to 1, 0
+for n, i in enumerate(labels):
+    if i == 'N':
+        labels[n] = 0
+    elif i == 'Y':
+        labels[n] = 1
+
+# To find an average length of all the conversations
+average_conv_len = np.mean([len(x.split(" ")) for x in conversation])
+#print(average_conv_len)
 
 avg_length = 325
 
@@ -16,13 +65,46 @@ avg_length = 325
 vocabulary_processor = tf.contrib.learn.preprocessing.VocabularyProcessor(avg_length)
 
 # To transform each conversation to numbers
-num_conversation = np.array(list(vocabulary_processor.fit_transform(mes)))
-num_conversation1 = np.array(list(vocabulary_processor.fit_transform(mes1)))
+num_conversation = np.array(list(vocabulary_processor.fit_transform(conversation)))
+labels_array = np.array(labels)
 
-with tf.Session(graph=tf.Graph()) as sess:
-    tf.saved_model.loader.load(sess, ["serve"], "model")
-    graph = tf.get_default_graph()
-    m = sess.run('myOutput:0', feed_dict={'myInput:0': num_conversation})
-    n = sess.run('myOutput:0', feed_dict={'myInput:0': num_conversation1})
-    print(m)
-    print(n)
+# To shuffle data
+shuffle = np.random.permutation(np.arange(len(num_conversation)))
+
+shuffled_conv = num_conversation[shuffle]
+shuffled_labels = labels_array[shuffle]
+
+training_size = 1576
+total_size = 1582
+
+train_conv = shuffled_conv[:training_size]
+train_labels = shuffled_labels[:training_size]
+
+test_conv = shuffled_conv[training_size:total_size]
+test_labels = shuffled_labels[training_size:total_size]
+
+
+
+sess=tf.Session()
+signature_key = tf.saved_model.signature_constants.DEFAULT_SERVING_SIGNATURE_DEF_KEY
+input_key = 'x_input'
+output_key = 'y_output'
+
+export_path = './model_rnn'
+meta_graph_def = tf.saved_model.loader.load(
+           sess,
+          ["myTag"],
+          export_path)
+signature = meta_graph_def.signature_def
+
+x_tensor_name = signature[signature_key].inputs[input_key].name
+y_tensor_name = signature[signature_key].outputs[output_key].name
+
+x = sess.graph.get_tensor_by_name(x_tensor_name)
+y = sess.graph.get_tensor_by_name(y_tensor_name)
+
+y_out = sess.run(y, {x: test_conv})
+print(y_out, test_conv)
+print("Actual labels: ", labels[training_size:total_size])
+for i in conversation[training_size:total_size]:
+    print(i)
