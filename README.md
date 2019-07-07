@@ -49,12 +49,12 @@ $ python3 manage.py runserver
 It will start the chat app on port 8000 in your local machine and use the saved 
 RNN model. Simply go to "http://localhost:8000/chat" Now type the name of the 
 chat room you would like to enter and start typing chat messages. Since the 
-dataset used from Facetime and Twitter to train the model was quite small you may see 
+dataset used from MySpace and Twitter to train the model was quite small you may see 
 unexpected behavior from the model. To check how well model is behaving please 
 look at the test-accuracy.
 
 ## Dataset used
-* Facetime dataset for cyberbullying
+* MySpace dataset for cyberbullying
 * Twitter dataset for cyberbullying
 
 ## Built With
