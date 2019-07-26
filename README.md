@@ -21,8 +21,13 @@ $ git clone git@gitlab.tubit.tu-berlin.de:nikhil.singh/awt-project-ss19.git
 ## Deployment
 
 Please create virtual env for python, activate it and install the required 
-dependencies. To train, test and save rnn model with tensorflow vocab processor 
-embedding. Please run
+dependencies using- 
+```
+$ pip install -r requirements_awt.txt
+```
+
+To train, test and save rnn model with tensorflow vocab processor embedding. 
+Please run
 ```
 $ python awt.py
 ```
@@ -42,7 +47,14 @@ $ python model_twitter_glove.py
 ```
 
 To run django channels based chat app. Please install virtual env for python3 
-with required dependencies. After that please run
+with required dependencies using-
+```
+$ virtualenv -p python3 chat
+$ source chat/bin/activate
+$ pip3 install -r requirements_chat.txt
+```
+
+After that please run
 ```
 $ python3 manage.py runserver
 ```
