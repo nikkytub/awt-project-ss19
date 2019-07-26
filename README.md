@@ -23,6 +23,8 @@ $ git clone git@gitlab.tubit.tu-berlin.de:nikhil.singh/awt-project-ss19.git
 Please create virtual env for python, activate it and install the required 
 dependencies using- 
 ```
+$ virtualenv awt
+$ source awt/bin/activate
 $ pip install -r requirements_awt.txt
 ```
 
