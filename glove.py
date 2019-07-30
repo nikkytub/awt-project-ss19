@@ -145,6 +145,9 @@ with tf.Session() as sess:
             training_loss, training_accuracy = sess.run([loss, accuracy], feed_dict=training)
 
         testing = {a: test_conv, b: test_labels}
+        test_loss, test_accuracy = sess.run([loss, accuracy], feed_dict=testing)
+        print("Epoch--> {}, Test Accuracy--> {:.3}".format(epoch + 1, test_accuracy))
+        predic_test = sess.run([pred], {a: test_conv})
 
     tensor_info_x = tf.saved_model.utils.build_tensor_info(a)
     tensor_info_y = tf.saved_model.utils.build_tensor_info(pred)
