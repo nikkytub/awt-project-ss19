@@ -13,7 +13,7 @@ channels-redis==2.4.0
 constantly==15.1.0
 cryptography==2.7
 daphne==2.3.0
-Django==2.2.2
+Django==2.2.21
 gast==0.2.2
 google-pasta==0.1.7
 grpcio==1.21.1
