@@ -23,7 +23,7 @@ lxml==4.3.4
 Markdown==3.1
 matplotlib==2.2.4
 mock==3.0.5
-numpy==1.16.3
+numpy==1.22.0
 oauthlib==3.0.1
 pandas==0.24.2
 protobuf==3.7.1
